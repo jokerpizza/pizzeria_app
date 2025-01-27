@@ -1,0 +1,28 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h2>POS Reports</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Default (zł)</th>
+            <th>Pyszne (zł)</th>
+            <th>UberEats (zł)</th>
+            <th>Other (zł)</th>
+            <th>Total (zł)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in sales %}
+        <tr>
+            <td>{{ s.date }}</td>
+            <td>{{ s.dine_in }}</td>
+            <td>{{ s.delivery }}</td>
+            <td>{{ s.other }}</td>
+            <td>{{ s.dine_in + s.delivery + s.other }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
