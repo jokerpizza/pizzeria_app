@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Status Finansowy - {{ current_year_month }}</h2>
+
+<div class="card my-3">
+  <div class="card-body">
+    <h5 class="card-title">Aktualny Zysk/Strata (bieżący miesiąc)</h5>
+    <p class="card-text">
+      <strong>{{ current_profit|round(2) }} zł</strong>
+    </p>
+  </div>
+</div>
+
+<div class="card my-3">
+  <div class="card-body">
+    <h5 class="card-title">Średni dzienny wynik</h5>
+    <p class="card-text">
+      <strong>{{ average_daily_profit|round(2) }} zł/dzień</strong>
+    </p>
+  </div>
+</div>
+
+<div class="card my-3">
+  <div class="card-body">
+    <h5 class="card-title">Prognozowany wynik na koniec miesiąca</h5>
+    <p class="card-text">
+      <strong>{{ projected_month_end|round(2) }} zł</strong>
+    </p>
+  </div>
+</div>
+{% endblock %}
