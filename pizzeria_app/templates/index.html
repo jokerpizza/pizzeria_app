@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Witaj w JOKER MANAGER SYSTEM!</h1>
+<p>System wspomagający zarządzanie Twoją pizzerią (i nie tylko).</p>
+
+{% if session.get('user_id') %}
+<p>Jesteś zalogowany jako <strong>{{ session.get('username') }}</strong>.</p>
+<p>
+    <a class="btn btn-primary" href="{{ url_for('sales_list') }}">Zarządzaj Sprzedażą</a>
+    <a class="btn btn-secondary" href="{{ url_for('costs_list') }}">Zarządzaj Kosztami</a>
+</p>
+<p>
+    <a class="btn btn-info" href="{{ url_for('dashboard') }}">Przejdź do Dashboardu</a>
+</p>
+{% else %}
+<p>Proszę się <a href="{{ url_for('login') }}">zalogować</a> lub 
+<a href="{{ url_for('register') }}">zarejestrować</a>.</p>
+{% endif %}
+{% endblock %}
