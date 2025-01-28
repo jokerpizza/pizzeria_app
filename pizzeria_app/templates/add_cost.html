@@ -1,0 +1,46 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h2>Dodaj Koszt</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label for="date" class="form-label">Data</label>
+    <input type="date" class="form-control" id="date" name="date" value="{{ today_date }}" required>
+  </div>
+  <div class="mb-3">
+    <label for="category" class="form-label">Kategoria</label>
+    <select class="form-select" id="category" name="category" required>
+      <option value="Food Oclock">Food Oclock</option>
+      <option value="Selgros">Selgros</option>
+      <option value="Mięso Matlega">Mięso Matlega</option>
+      <option value="Piter Company">Piter Company</option>
+      <option value="Prąd">Prąd</option>
+      <option value="ZBK">ZBK</option>
+      <option value="Opakowania">Opakowania</option>
+      <option value="Paliwo">Paliwo</option>
+      <option value="Koszt stały">Koszt stały</option>
+      <option value="Wypłaty">Wypłaty</option>
+      <option value="Wyposażenie">Wyposażenie</option>
+      <option value="Allegro">Allegro</option>
+      <option value="Inne">Inne</option>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label for="description" class="form-label">Opis</label>
+    <textarea class="form-control" id="description" name="description" required></textarea>
+  </div>
+  <div class="mb-3">
+    <label for="amount" class="form-label">Kwota (zł)</label>
+    <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+  </div>
+  
+    <div>
+        <label for="payment_method">Sposób płatności:</label>
+        <select name="payment_method" id="payment_method" required>
+            <option value="Gotówka">Gotówka</option>
+            <option value="Przelew">Przelew</option>
+        </select>
+    </div>
+<button type="submit" class="btn btn-primary">Zapisz</button>
+</form>
+{% endblock %}

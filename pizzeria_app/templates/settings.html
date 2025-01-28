@@ -1,0 +1,22 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h2>Ustawienia</h2>
+
+<h3>Zarządzanie kategoriami kosztów</h3>
+<form method="POST" action="{{ url_for('settings') }}">
+    <label for="category_name">Dodaj nową kategorię:</label>
+    <input type="text" id="category_name" name="category_name" required>
+    <button type="submit" class="btn btn-primary">Dodaj</button>
+</form>
+
+<h3>Istniejące kategorie</h3>
+<ul>
+    {% for category in categories %}
+    <li>
+        {{ category.name }}
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
