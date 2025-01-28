@@ -1,0 +1,38 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h2 class="text-center mb-4">Sejf Gotówkowy</h2>
+
+<!-- Current cash balance -->
+<div class="card text-center mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Aktualne Saldo Gotówkowe</h5>
+        <p class="display-4"><strong>{{ cash_balance | round(2) }} zł</strong></p>
+    </div>
+</div>
+
+<!-- Logs -->
+<h3>Logi operacji</h3>
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Użytkownik</th>
+                <th>Typ operacji</th>
+                <th>Kwota (zł)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.date }}</td>
+                <td>{{ log.user }}</td>
+                <td>{{ log.operation_type }}</td>
+                <td>{{ log.amount | round(2) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
