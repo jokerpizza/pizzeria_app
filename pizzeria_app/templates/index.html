@@ -1,0 +1,40 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4">Witamy w JOKER MANAGER SYSTEM</h1>
+        <p class="lead">Twój system do zarządzania sprzedażą, kosztami i finansami.</p>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Zarządzaj Sprzedażą</h5>
+                    <p class="card-text">Śledź sprzedaż i analizuj wyniki swojego biznesu.</p>
+                    <a href="{{ url_for('sales_list') }}" class="btn btn-primary">Zobacz więcej</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Zarządzaj Kosztami</h5>
+                    <p class="card-text">Kontroluj swoje wydatki i planuj budżet.</p>
+                    <a href="{{ url_for('costs_list') }}" class="btn btn-primary">Zobacz więcej</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Status Finansowy</h5>
+                    <p class="card-text">Analizuj swoje finanse w czasie rzeczywistym.</p>
+                    <a href="{{ url_for('finance_status') }}" class="btn btn-primary">Zobacz więcej</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
