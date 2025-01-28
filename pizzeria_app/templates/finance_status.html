@@ -1,0 +1,33 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Status Finansowy</h2>
+<p><strong>Wybrany rok:</strong> {{ selected_year }}</p>
+<p><strong>Wybrany miesiąc:</strong> {{ selected_month }}</p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Rodzaj</th>
+            <th>Kwota (zł)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Sprzedaż w miesiącu</td>
+            <td>{{ monthly_sales }}</td>
+        </tr>
+        <tr>
+            <td>Koszty w miesiącu</td>
+            <td>{{ monthly_costs }}</td>
+        </tr>
+        <tr>
+            <td>Zysk w miesiącu</td>
+            <td>{{ current_profit }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<a class="btn btn-primary" href="{{ url_for('dashboard') }}">Powrót do dashboardu</a>
+{% endblock %}
