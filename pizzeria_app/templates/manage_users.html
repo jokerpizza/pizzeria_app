@@ -1,0 +1,127 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4 text-center">Zarządzanie Użytkownikami i Uprawnieniami</h2>
+
+<div class="container">
+    <!-- Card for Adding New Users -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            Dodaj Nowego Użytkownika
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('manage_users') }}">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Nazwa użytkownika:</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Wprowadź nazwę użytkownika" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Hasło:</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Wprowadź hasło" required>
+                </div>
+                <div class="mb-3">
+                    <label for="role" class="form-label">Rola:</label>
+                    <select id="role" name="role" class="form-control" required>
+                        <option value="Administrator">Administrator</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Pracownik">Pracownik</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Dodaj Użytkownika</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Card for Managing Existing Users -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            Istniejący Użytkownicy
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Nazwa Użytkownika</th>
+                            <th scope="col">Rola</th>
+                            <th scope="col" class="text-end">Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('manage_users') }}" class="d-flex">
+                                    <select name="role" class="form-control me-2">
+                                        <option value="Administrator" {% if user.role == 'Administrator' %}selected{% endif %}>Administrator</option>
+                                        <option value="Manager" {% if user.role == 'Manager' %}selected{% endif %}>Manager</option>
+                                        <option value="Pracownik" {% if user.role == 'Pracownik' %}selected{% endif %}>Pracownik</option>
+                                    </select>
+                                    <input type="hidden" name="update_user_id" value="{{ user.id }}">
+                                    <button type="submit" class="btn btn-primary btn-sm">Zapisz</button>
+                                </form>
+                            </td>
+                            <td class="text-end">
+                                <form method="POST" action="{{ url_for('manage_users') }}" style="display: inline;">
+                                    <input type="hidden" name="delete_user_id" value="{{ user.id }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card for Managing Permissions -->
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            Zarządzanie Uprawnieniami
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('manage_users') }}" class="mb-4">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="role" class="form-label">Rola:</label>
+                        <select id="role" name="role" class="form-control" required>
+                            <option value="Administrator">Administrator</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Pracownik">Pracownik</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="permission" class="form-label">Podstrona:</label>
+                        <select id="permission" name="permission" class="form-control" required>
+                            <option value="manage_users">Zarządzanie Użytkownikami</option>
+                            <option value="add_cost">Dodaj Koszt</option>
+                            <option value="add_sale">Dodaj Sprzedaż</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success w-100">Dodaj Uprawnienie</button>
+                    </div>
+                </div>
+            </form>
+
+            <h5 class="mb-3">Aktualne Uprawnienia</h5>
+            <ul class="list-group">
+                {% for permission in permissions %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><strong>{{ permission.role }}</strong>: {{ permission.permission }}</span>
+                    <form method="POST" action="{{ url_for('manage_users') }}" style="margin: 0;">
+                        <input type="hidden" name="delete_permission_id" value="{{ permission.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
