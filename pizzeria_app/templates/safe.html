@@ -1,0 +1,32 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Stan Sejfu</h2>
+    <div class="card my-4">
+        <div class="card-body text-center">
+            <h3 class="card-title">Aktualny stan gotówki</h3>
+            <p class="display-4 text-success"><strong>{{ current_cash | round(2) }} zł</strong></p>
+        </div>
+    </div>
+    <h4>Ostatnie operacje</h4>
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Data</th>
+                <th>Typ</th>
+                <th>Kwota (zł)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for operation in recent_operations %}
+            <tr>
+                <td>{{ operation.date }}</td>
+                <td>{{ operation.type }}</td>
+                <td>{{ operation.amount | round(2) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
