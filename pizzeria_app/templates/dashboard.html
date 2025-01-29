@@ -1,0 +1,22 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4">Dashboard</h1>
+        <p class="lead">Zarządzaj swoim biznesem.</p>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Sejf</h5>
+                    <p class="card-text">Monitoruj aktualny stan gotówki.</p>
+                    <a href="{{ url_for('safe') }}" class="btn btn-primary">Przejdź do Sejfu</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
