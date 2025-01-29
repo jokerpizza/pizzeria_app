@@ -1,0 +1,14 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center">Sejf - Stan Gotówki</h1>
+    <div class="card text-center mt-4">
+        <div class="card-body">
+            <h3 class="card-title">Aktualny stan sejfu:</h3>
+            <p class="card-text display-4 text-success">{{ balance }} PLN</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
