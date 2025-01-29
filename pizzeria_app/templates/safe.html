@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Dodaj operację gotówkową</h2>
+<form method="POST" action="{{ url_for('deposit_safe') }}">
+    <label for="amount">Kwota wpłaty:</label>
+    <input type="number" name="amount" step="0.01" required>
+    <label for="description">Opis:</label>
+    <input type="text" name="description">
+    <button type="submit">Wpłata</button>
+</form>
+
+<form method="POST" action="{{ url_for('withdraw_safe') }}">
+    <label for="amount">Kwota wypłaty:</label>
+    <input type="number" name="amount" step="0.01" required>
+    <label for="description">Opis:</label>
+    <input type="text" name="description">
+    <button type="submit">Wypłata</button>
+</form>
+
+<h2>Stan sejfu</h2>
+<div class="alert alert-info">
+    <h4>Aktualna gotówka w sejfie: <strong>{{ current_safe_balance }} zł</strong></h4>
+</div>
+
+<h3>Ostatnie transakcje</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Typ</th>
+            <th>Kwota (zł)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transaction in recent_transactions %}
+        <tr>
+            <td>{{ transaction[0] }}</td>
+            <td>{{ transaction[1] }}</td>
+            <td style="color: {% if transaction[2] < 0 %}red{% else %}green{% endif %};">
+                {{ transaction[2] }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+
+    </table>
+
+    <h3>Dodaj ręczną transakcję</h3>
+    <form method="POST" action="{{ url_for('deposit_safe') }}">
+        <label>Kwota Wpłaty:</label>
+        <input type="number" step="0.01" name="amount" required>
+        <label>Opis:</label>
+        <input type="text" name="description">
+        <button type="submit">Dodaj Wpłatę</button>
+    </form>
+
+    <form method="POST" action="{{ url_for('withdraw_safe') }}">
+        <label>Kwota Wypłaty:</label>
+        <input type="number" step="0.01" name="amount" required>
+        <label>Opis:</label>
+        <input type="text" name="description">
+        <button type="submit">Dodaj Wypłatę</button>
+    </form>
+    
+{% endblock %}
