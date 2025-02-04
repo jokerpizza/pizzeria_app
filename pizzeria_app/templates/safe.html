@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Stan sejfu</h2>
+<div class="alert alert-info">
+    <h4>Aktualna gotówka w sejfie: <strong>{{ current_safe_balance }} zł</strong></h4>
+</div>
+
+<form method="POST">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label for="amount" class="form-label">Kwota (zł)</label>
+            <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+        </div>
+        <div class="col-md-4">
+            <label for="type" class="form-label">Typ transakcji</label>
+            <select name="type" id="type" class="form-select">
+                <option value="Wpłata">Wpłata</option>
+                <option value="Wypłata">Wypłata</option>
+            </select>
+        </div>
+        <div class="col-md-4 align-self-end">
+            <button type="submit" class="btn btn-success w-100">Dodaj transakcję</button>
+        </div>
+    </div>
+</form>
+
+<h3>Ostatnie transakcje</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Typ</th>
+            <th>Kwota (zł)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transaction in recent_transactions %}
+        <tr>
+            <td>{{ transaction.date }}</td>
+            <td>{{ transaction.type }}</td>
+            <td style="color: {% if transaction.amount < 0 %}red{% else %}green{% endif %};">
+                {{ transaction.amount }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h5>Łączne wpływy: <strong style="color: green;">{{ total_income }} zł</strong></h5>
+<h5>Łączne wydatki: <strong style="color: red;">{{ total_expenses }} zł</strong></h5>
+
+<canvas id="safeChart"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById("safeChart").getContext("2d");
+  const data = {
+    labels: ["Wpłaty", "Wypłaty"],
+    datasets: [{
+      data: [{{ total_income }}, {{ total_expenses }}],
+      backgroundColor: ["green", "red"]
+    }]
+  };
+
+  new Chart(ctx, {
+    type: "pie",
+    data: data
+  });
+</script>
+
+<a href="{{ url_for('safe_bp.export_safe_data') }}" class="btn btn-secondary mt-3">Eksportuj do Excel</a>
+{% endblock %}
