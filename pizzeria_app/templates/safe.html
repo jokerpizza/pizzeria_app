@@ -1,0 +1,51 @@
+<style>
+    .transaction-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .transaction-table th, .transaction-table td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    .transaction-table th {
+        background-color: #f4f4f4;
+    }
+    .income {
+        color: green;
+        font-weight: bold;
+    }
+    .expense {
+        color: red;
+        font-weight: bold;
+    }
+</style>
+
+<h3>Historia transakcji sejfu</h3>
+<table class="transaction-table">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Typ</th>
+            <th>Kategoria</th>
+            <th>Kwota</th>
+            <th>Źródło</th>
+            <th>Opis</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transaction in recent_transactions %}
+        <tr>
+            <td>{{ transaction.date }}</td>
+            <td>{{ transaction.type }}</td>
+            <td>{{ transaction.category }}</td>
+            <td class="{% if transaction.amount > 0 %}income{% else %}expense{% endif %}">
+                {{ transaction.amount }}
+            </td>
+            <td>{{ transaction.source }}</td>
+            <td>{{ transaction.description }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
