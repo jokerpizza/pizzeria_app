@@ -536,199 +536,44 @@ from datetime import datetime, timedelta
 from datetime import datetime, timedelta
 from flask import flash  # Dodany brakujący import
 
-from datetime import datetime, timedelta
-from flask import flash, redirect, url_for  # Dodany brakujący import redirect i url_for
-
-from datetime import datetime, timedelta
-from flask import flash, redirect, url_for  # Dodane brakujące importy
-
-from datetime import datetime
-from flask import flash, redirect, url_for, request
-
 @app.route('/safe', methods=['GET', 'POST'])
 @login_required
 def safe():
     today = datetime.today()
     selected_year = request.args.get('year', today.year, type=int)
     selected_month = request.args.get('month', today.month, type=int)
+    selected_day = request.args.get('day', 'all')
 
     # Obsługa wpłaty do sejfu
     if request.method == 'POST':
-        deposit_amount = request.form.get('deposit_amount', type=float)
-        source_type = request.form.get('source_type')
+        try:
+            deposit_amount = float(request.form.get('deposit_amount', 0))
+            source_type = request.form.get('source_type')
 
-        if deposit_amount and deposit_amount > 0 and source_type in ['karta', 'przelew', 'zaplacono']:
-            sale = Sale.query.order_by(Sale.date.desc()).first()
+            if deposit_amount > 0 and source_type in ['karta', 'przelew', 'zaplacone']:
+                sale = Sale.query.order_by(Sale.date.desc()).first()
 
-            if sale:
-                if source_type == 'karta' and sale.karta >= deposit_amount:
-                    sale.karta -= deposit_amount
-                elif source_type == 'przelew' and sale.przelew >= deposit_amount:
-                    sale.przelew -= deposit_amount
-                elif source_type == 'zaplacono' and sale.zaplacono >= deposit_amount:
-                    sale.zaplacono -= deposit_amount
-                else:
-                    flash("Brak wystarczających środków!", "danger")
-                    return redirect(url_for('safe'))
+                if sale:
+                    if source_type == 'karta' and sale.karta >= deposit_amount:
+                        sale.karta -= deposit_amount
+                    elif source_type == 'przelew' and sale.przelew >= deposit_amount:
+                        sale.przelew -= deposit_amount
+                    elif source_type == 'zaplacone' and sale.zaplacono >= deposit_amount:
+                        sale.zaplacono -= deposit_amount
+                    else:
+                        flash("Brak wystarczających środków!", "danger")
+                        return redirect(url_for('safe'))
 
-                db.session.commit()
-
-                new_safe_transaction = Cost(
-                    date=today.strftime("%Y-%m-%d"),
-                    category="Wpłata do sejfu",
-                    description=f"Gotówka z {source_type}",
-                    amount=-deposit_amount,
-                    payment_method="Gotówka"
-                )
-
-                db.session.add(new_safe_transaction)
-                db.session.commit()
-
-                flash("Wpłata do sejfu została dodana!", "success")
-                return redirect(url_for('safe'))
-            else:
-                flash("Brak zapisanych transakcji sprzedaży!", "danger")
-                return redirect(url_for('safe'))
-        else:
-            flash("Niepoprawna wartość wpłaty!", "danger")
-            return redirect(url_for('safe'))
-
-    # Pobranie wszystkich transakcji z danego miesiąca
-    start_date = f"{selected_year}-{selected_month:02d}-01"
-    end_date = f"{selected_year}-{selected_month:02d}-31"
-
-    sales = Sale.query.filter(Sale.date >= start_date, Sale.date <= end_date).all()
-    costs = Cost.query.filter(Cost.date >= start_date, Cost.date <= end_date, Cost.payment_method == "Gotówka").all()
-
-    recent_transactions = [
-        {"date": s.date, "type": "Sprzedaż", "amount": s.gotowka, "source": "Gotówka", "description": "Sprzedaż"}
-        for s in sales
-    ] + [
-        {"date": c.date, "type": "Koszt", "amount": -c.amount, "source": c.payment_method, "description": c.description}
-        for c in costs
-    ]
-
-    recent_transactions.sort(key=lambda x: x["date"], reverse=True)
-
-    return render_template(
-        'safe.html',
-        current_safe_balance=sum(s.gotowka for s in sales) - sum(c.amount for c in costs),
-        recent_transactions=recent_transactions[:10],
-        selected_year=selected_year,
-        selected_month=selected_month
-    )
-
-                    db.session.add(new_safe_transaction)
+                    # Aktualizacja rekordu w bazie danych
                     db.session.commit()
 
-                    flash("Wpłata do sejfu została dodana!", "success")
-                    return redirect(url_for('safe'))
-
-        except ValueError:
-            flash("Niepoprawna wartość wpłaty!", "danger")
-            return redirect(url_for('safe'))
-
-    # Tworzenie zakresu dat dla filtrowania
-    start_date = f"{selected_year}-{selected_month:02d}-01"
-    end_date = (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=31)).strftime("%Y-%m-%d")
-
-    # Pobieranie transakcji z wybranego okresu
-    sales = Sale.query.filter(Sale.date >= start_date, Sale.date <= end_date).all()
-    costs = Cost.query.filter(Cost.date >= start_date, Cost.date <= end_date, Cost.payment_method == "Gotówka").all()
-
-    # Tworzenie listy transakcji jako słowników
-    recent_transactions = []
-
-    for s in sales:
-        recent_transactions.append({
-            "date": s.date,
-            "type": "Sprzedaż",
-            "category": "Wpływ",
-            "amount": s.gotowka,
-            "source": "Gotówka",
-            "description": "Sprzedaż w restauracji"
-        })
-
-    for c in costs:
-        recent_transactions.append({
-            "date": c.date,
-            "type": "Koszt",
-            "category": c.category,
-            "amount": -c.amount,
-            "source": c.payment_method,
-            "description": c.description
-        })
-
-    # Sortowanie transakcji od najnowszych do najstarszych
-    recent_transactions.sort(key=lambda x: x["date"], reverse=True)
-    recent_transactions = recent_transactions[:10]
-
-    return render_template(
-        'safe.html',
-        current_safe_balance=sum(s.gotowka for s in sales) - sum(c.amount for c in costs),
-        recent_transactions=recent_transactions,
-        selected_year=selected_year,
-        selected_month=selected_month
-    )
-
-                    db.session.add(new_safe_transaction)
-                    db.session.commit()
-
-                    flash("Wpłata do sejfu została dodana!", "success")
-                    return redirect(url_for('safe'))
-
-        except ValueError:
-            flash("Niepoprawna wartość wpłaty!", "danger")
-            return redirect(url_for('safe'))
-
-    # Tworzenie zakresu dat dla filtrowania
-    start_date = f"{selected_year}-{selected_month:02d}-01"
-    end_date = (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=31)).strftime("%Y-%m-%d")
-
-    # Usuwamy filtrowanie po dniu, jeśli powoduje błędy
-    if selected_day and selected_day != "all":
-        start_date = f"{selected_year}-{selected_month:02d}-{int(selected_day):02d}"
-        end_date = start_date  # Filtrujemy tylko jeden dzień
-
-    # Pobieranie transakcji z wybranego okresu
-    sales = Sale.query.filter(Sale.date >= start_date, Sale.date <= end_date).all()
-    costs = Cost.query.filter(Cost.date >= start_date, Cost.date <= end_date, Cost.payment_method == "Gotówka").all()
-
-    # Tworzenie listy transakcji jako słowników
-    recent_transactions = []
-
-    for s in sales:
-        recent_transactions.append({
-            "date": s.date,
-            "type": "Sprzedaż",
-            "category": "Wpływ",
-            "amount": s.gotowka,
-            "source": "Gotówka",
-            "description": "Sprzedaż w restauracji"
-        })
-
-    for c in costs:
-        recent_transactions.append({
-            "date": c.date,
-            "type": "Koszt",
-            "category": c.category,
-            "amount": -c.amount,
-            "source": c.payment_method,
-            "description": c.description
-        })
-
-    # Sortowanie transakcji od najnowszych do najstarszych
-    recent_transactions.sort(key=lambda x: x["date"], reverse=True)
-    recent_transactions = recent_transactions[:10]
-
-    return render_template(
-        'safe.html',
-        current_safe_balance=sum(s.gotowka for s in sales) - sum(c.amount for c in costs),
-        recent_transactions=recent_transactions,
-        selected_year=selected_year,
-        selected_month=selected_month,
-        selected_day=selected_day
-    )
+                    new_safe_transaction = Cost(
+                        date=today.strftime("%Y-%m-%d"),
+                        category="Wpłata do sejfu",
+                        description=f"Gotówka z {source_type}",
+                        amount=-deposit_amount,
+                        payment_method="Gotówka"
+                    )
 
                     db.session.add(new_safe_transaction)
                     db.session.commit()
