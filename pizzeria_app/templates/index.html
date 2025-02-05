@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4">Witamy w JOKER MANAGER SYSTEM</h1>
+        <p class="lead">Twój system do zarządzania sprzedażą, kosztami i finansami.</p>
+    </div>
+
+    <div class="row mt-5">
+        {% if session.get('user_id') %}  <!-- Sprawdzamy, czy użytkownik jest zalogowany -->
+        {% if 'sales' in session['user_permissions'] %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Sprzedaż</h5>
+                    <p class="card-text">Śledź sprzedaż i analizuj wyniki swojego biznesu.</p>
+                    <a href="{{ url_for('sales_list') }}" class="btn btn-primary">Zobacz Sprzedaż</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if 'costs' in session['user_permissions'] %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Koszty</h5>
+                    <p class="card-text">Kontroluj swoje wydatki i planuj budżet.</p>
+                    <a href="{{ url_for('costs_list') }}" class="btn btn-primary">Zarządzaj Kosztami</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if 'dashboard' in session['user_permissions'] %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Dashboard</h5>
+                    <p class="card-text">Przeglądaj kluczowe wskaźniki swojego biznesu.</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Przejdź do Dashboardu</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if 'safe' in session['user_permissions'] %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Sejf</h5>
+                    <p class="card-text">Sprawdź aktualny stan gotówki w sejfie.</p>
+                    <a href="{{ url_for('safe_bp.safe') }}" class="btn btn-primary">Przejdź do Sejfu</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="text-center">Zaloguj się, aby zobaczyć panel.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
