@@ -1,0 +1,39 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Sejf Saldo</h2>
+<p><strong>Saldo gotówki:</strong> {{ current_safe_balance }} PLN</p>
+<p><strong>Saldo przelewów:</strong> {{ saldo_przelewow }} PLN</p>
+
+<h3>Nowa operacja</h3>
+<form method="POST">
+    <label for="amount">Kwota:</label>
+    <input type="number" step="0.01" name="amount" required>
+    
+    <label for="type">Typ operacji:</label>
+    <select name="type">
+        <option value="wpłata">Wpłata do bankomatu</option>
+        <option value="wypłata">Wypłata z bankomatu</option>
+    </select>
+
+    <button type="submit">Dodaj operację</button>
+</form>
+
+<h3>Ostatnie transakcje</h3>
+<table border="1">
+    <tr>
+        <th>Data</th>
+        <th>Typ</th>
+        <th>Kwota</th>
+    </tr>
+    {% for transaction in transactions %}
+    <tr>
+        <td>{{ transaction.date }}</td>
+        <td>{{ transaction.type }}</td>
+        <td>{{ transaction.amount }} PLN</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
