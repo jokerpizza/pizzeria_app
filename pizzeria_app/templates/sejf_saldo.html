@@ -1,0 +1,51 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="title">Sejf Saldo</h2>
+
+    <div class="card-container">
+        <div class="card balance-card">
+            <h3>Saldo gotówki</h3>
+            <p class="saldo">{{ current_safe_balance }} PLN</p>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <h3>Filtruj transakcje</h3>
+        <form method="GET">
+            <label for="start_date">Od:</label>
+            <input type="date" name="start_date" value="{{ start_date }}" class="input-field">
+            
+            <label for="end_date">Do:</label>
+            <input type="date" name="end_date" value="{{ end_date }}" class="input-field">
+
+            <button type="submit" class="btn">Filtruj</button>
+        </form>
+    </div>
+
+    <h3>Historia operacji</h3>
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Typ</th>
+                <th>Kwota</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction.date }}</td>
+                <td class="{% if transaction.type == 'Sprzedaż' %}sale{% elif transaction.type == 'Wydatek' %}expense{% elif transaction.type == 'wypłata' %}withdraw{% else %}deposit{% endif %}">
+                    {{ transaction.type }}
+                </td>
+                <td>{{ transaction.amount }} PLN</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
