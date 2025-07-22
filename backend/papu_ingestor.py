@@ -79,7 +79,7 @@ async def _ensure_context() -> BrowserContext:
         await page.goto("https://admin.papu.io/signin", wait_until="domcontentloaded")
         email_input = await page.wait_for_selector("input[name='email'], input[type='email']", timeout=60000)
         await email_input.fill(PAPU_EMAIL)
-        password_input = await page.wait_for_selector("input[name='password'], input[type='password']", timeout=60000)
+                password_input = await page.wait_for_selector("input[name='password'], input[type='password']", timeout=60000)
         await password_input.fill(PAPU_PASSWORD)
         await page.click("button[type='submit']")
         await page.wait_for_url("**/dashboard", timeout=15000)
