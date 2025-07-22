@@ -1,170 +1,128 @@
-""" 
-Papu.io → RabbitMQ ingestor
----------------------------------------
 
-- Loguje się do panelu admin.papu.io za pomocą Playwright.
-- Co 60 s pobiera nowe sprzedaże z ostatnich 2 min.
-- Publikuje każdą pozycję jako JSON do kolejki RabbitMQ (`pos_sales`).
-
-Zmienne środowiskowe:
-    PAPU_EMAIL            – login do Papu.io
-    PAPU_PASSWORD         – hasło
-    PAPU_COMPANY_ID       – np. "758"
-    PAPU_LOCALIZATION_ID  – np. "801"
-    RABBIT_URL            – amqp://guest:guest@localhost:5672/
-    RABBIT_QUEUE          – domyślnie "pos_sales"
-
-Uruchomienie:
-    python papu_ingestor.py
-
-Zależności:
-    playwright==1.44.0
-    pika==1.3.2
-    python-dotenv
+"""Sanity‑checked Papu.io ingestor – ready for Render.com
+----------------------------------------------------------
+• Expects the following env‑vars at run‑time:
+    PAPU_EMAIL, PAPU_PASSWORD, PAPU_COMPANY_ID, PAPU_LOCALIZATION_ID
+• Launches Chromium in true headless mode with --no‑sandbox for Render
+• Logs in once, then grabs today's delivered/finished orders and exits
+• Emits a CSV called `sales.csv` next to the script (one row per order)
 """
 
-import os
-import asyncio
-import json
-import logging
-from datetime import datetime, timedelta, timezone
-from typing import List, Dict
+import asyncio, csv, logging, os
+from datetime import datetime, timezone
 
-import pika
-from playwright.async_api import async_playwright, BrowserContext
+from playwright.async_api import async_playwright, TimeoutError as PWTimeout
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
+LOGIN_URL = "https://admin.papu.io/login"
+MEALS_URL = (
+    "https://admin.papu.io/meals"
+    "?company={company}"
+    "&dateRangeName=custom"
+    "&order__finished_at_after={after}"
+    "&order__finished_at_before={before}"
+    "&order__finished_type=delivered"
+    "&order__finished_type=finished"
+    "&order__localization={loc}"
+    "&page=1&page_size=500"
 )
 
-# -----------  ENV  -----------
-PAPU_EMAIL: str = os.getenv("PAPU_EMAIL", "")
-PAPU_PASSWORD: str = os.getenv("PAPU_PASSWORD", "")
-PAPU_COMPANY_ID: str = os.getenv("PAPU_COMPANY_ID", "")
-PAPU_LOCALIZATION_ID: str = os.getenv("PAPU_LOCALIZATION_ID", "")
+LOG = logging.getLogger("papu-ingestor")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(levelname)s │ %(message)s"
+)
 
-RABBIT_URL: str = os.getenv("RABBIT_URL", "amqp://guest:guest@localhost:5672/")
-QUEUE_NAME: str = os.getenv("RABBIT_QUEUE", "pos_sales")
-
-LIST_ENDPOINT = "https://admin.papu.io/api/meals"
-PLAYWRIGHT_STATE = "storage_state.json"
-
-UTC = timezone.utc
+# ──────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ──────────────────────────────────────────────────────────────────────────────
 
 
-def _require_env(var: str) -> None:
-    if not os.getenv(var):
-        raise RuntimeError(f"Missing required env var {var}")
+def _env(name: str) -> str:
+    val = os.getenv(name)
+    if not val:
+        LOG.error("Missing required env var %s – exiting!", name)
+        raise SystemExit(1)
+    return val.strip()
 
 
-def _get_datetime_str(dt: datetime) -> str:
-    """Return Papu-compatible datetime string: YYYY-MM-DD HH:MM"""
-    return dt.astimezone(UTC).strftime("%Y-%m-%d %H:%M")
+async def _login(page, email: str, password: str) -> None:
+    """Perform sign‑in, waiting robustly for the relevant fields."""
+    await page.goto(LOGIN_URL, wait_until="networkidle")
+    try:
+        await page.wait_for_selector(
+            "input[name=email], input[type=email]", timeout=60_000
+        )
+    except PWTimeout:
+        raise RuntimeError("Login page did not load e‑mail input in time")
+
+    await page.fill("input[name=email], input[type=email]", email)
+    await page.fill("input[name=password], input[type=password]", password)
+    await page.click("button[type=submit]")
+    # successful login redirects to /dashboard – wait for it
+    await page.wait_for_url("**/dashboard", timeout=60_000)
 
 
-# -----------  PLAYWRIGHT FLOW  -----------
-async def _ensure_context() -> BrowserContext:
-    """Create or reuse browser context with saved cookies"""
-    async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
-        if os.path.exists(PLAYWRIGHT_STATE):
-            context = await browser.new_context(storage_state=PLAYWRIGHT_STATE)
-            return context
-        # First run – login through UI.
-        context = await browser.new_context()
-        page = await context.new_page()
-        logging.info("Logging in to Papu.io UI...")
-        await page.goto("https://admin.papu.io/login", wait_until="domcontentloaded")
-        await page.goto("https://admin.papu.io/signin", wait_until="domcontentloaded")
-        email_input = await page.wait_for_selector("input[name='email'], input[type='email']", timeout=60000)
-        await email_input.fill(PAPU_EMAIL)
-                password_input = await page.wait_for_selector("input[name='password'], input[type='password']", timeout=60000)
-        await password_input.fill(PAPU_PASSWORD)
-        await page.click("button[type='submit']")
-        await page.wait_for_url("**/dashboard", timeout=15000)
-        # Save cookies/state for next launches
-        await context.storage_state(path=PLAYWRIGHT_STATE)
-        logging.info("Login successful – state saved.")
-        return context
-
-
-async def fetch_sales(since: datetime, until: datetime) -> List[Dict]:
-    """Fetch sales items between since/until."""
-    context = await _ensure_context()
-    request_context = context.request
-
-    params = {
-        "company": PAPU_COMPANY_ID,
-        "order__localization": PAPU_LOCALIZATION_ID,
-        "order__finished_at_after": _get_datetime_str(since),
-        "order__finished_at_before": _get_datetime_str(until),
-        "order__finished_type": ["delivered", "finished"],
-        "page_size": 50,
-        "page": 1,
-    }
-
-    sales: List[Dict] = []
-    while True:
-        resp = await request_context.get(LIST_ENDPOINT, params=params)
-        if resp.status != 200:
-            text = await resp.text()
-            logging.error("Papu API error %s – %s", resp.status, text[:200])
-            break
-        data = await resp.json()
-        sales.extend(data.get("results", []))
-        if not data.get("next"):
-            break
-        params["page"] += 1
-
-    await context.close()
-    logging.info("Fetched %d sales (since %s)", len(sales), since)
+async def _scrape_sales(page, company: str, loc_id: str, since: datetime, until: datetime):
+    after = since.strftime("%Y-%m-%d+%H:%M")
+    before = until.strftime("%Y-%m-%d+%H:%M")
+    url = MEALS_URL.format(
+        company=company, after=after, before=before, loc=loc_id
+    )
+    LOG.info("Fetching table URL %s", url)
+    await page.goto(url, wait_until="networkidle")
+    await page.wait_for_selector("table tbody tr", timeout=60_000)
+    rows = page.locator("table tbody tr")
+    sales = []
+    for i in range(await rows.count()):
+        txts = await rows.nth(i).locator("td").all_inner_texts()
+        sales.append(txts)
     return sales
 
 
-# -----------  RABBITMQ  -----------
-def publish_sales(sales: List[Dict]):
-    if not sales:
-        return
-    connection = pika.BlockingConnection(pika.URLParameters(RABBIT_URL))
-    channel = connection.channel()
-    channel.queue_declare(queue=QUEUE_NAME, durable=True)
-    for sale in sales:
-        channel.basic_publish(
-            exchange="",
-            routing_key=QUEUE_NAME,
-            body=json.dumps(sale).encode(),
-            properties=pika.BasicProperties(delivery_mode=2),
-        )
-    connection.close()
-    logging.info("Published %d sales to queue '%s'", len(sales), QUEUE_NAME)
+async def main() -> None:
+    email = _env("PAPU_EMAIL")
+    password = _env("PAPU_PASSWORD")
+    company = _env("PAPU_COMPANY_ID")
+    loc_id = _env("PAPU_LOCALIZATION_ID")
 
+    today = datetime.now(timezone.utc).astimezone()
+    since = today.replace(hour=0, minute=0, second=0, microsecond=0)
+    until = today
 
-# -----------  MAIN LOOP  -----------
-async def run_polling():
-    logging.info("Starting Papu ingestor…")
-    window = timedelta(minutes=2)
-    while True:
-        until = datetime.utcnow().replace(tzinfo=UTC)
-        since = until - window
-        try:
-            sales = await fetch_sales(since, until)
-            publish_sales(sales)
-        except Exception as exc:
-            logging.exception("Ingestor error: %s", exc)
-        await asyncio.sleep(60)  # poll interval
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox"])
+        context = await browser.new_context()
+        page = await context.new_page()
 
+        LOG.info("Logging in to Papu…")
+        await _login(page, email, password)
 
-def main():
-    for var in [
-        "PAPU_EMAIL",
-        "PAPU_PASSWORD",
-        "PAPU_COMPANY_ID",
-        "PAPU_LOCALIZATION_ID",
-    ]:
-        _require_env(var)
-    asyncio.run(run_polling())
+        LOG.info("Pulling today's delivered/finished orders…")
+        sales = await _scrape_sales(page, company, loc_id, since, until)
+        LOG.info("Got %d rows.", len(sales))
+
+        csv_path = os.path.join(os.path.dirname(__file__), "sales.csv")
+        with open(csv_path, "w", newline="", encoding="utf-8") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(
+                [
+                    "Kategoria",
+                    "Rozmiar",
+                    "Nazwa",
+                    "Ilość",
+                    "Cena",
+                    "Nr zam.",
+                    "Data zakończenia",
+                    "Brand",
+                    "Źródło",
+                    "Typ zakończenia",
+                    "Paragon",
+                ]
+            )
+            writer.writerows(sales)
+        LOG.info("✓ sales.csv written (%s)", csv_path)
+
+        await browser.close()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
