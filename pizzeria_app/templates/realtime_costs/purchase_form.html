@@ -1,0 +1,13 @@
+{% extends 'base.html' %}{% block title %}{{ action }}{% endblock %}{% block content %}
+<h1>{{ action }}</h1>
+<form method="post">
+{{ form.hidden_tag() }}
+<div>{{ form.product_id.label }}<br>{{ form.product_id() }}{% for e in form.product_id.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+<div>{{ form.quantity.label }}<br>{{ form.quantity(step='0.0001') }}{% for e in form.quantity.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+<div>{{ form.total_net.label }}<br>{{ form.total_net(step='0.01') }}{% for e in form.total_net.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+<div>{{ form.currency.label }}<br>{{ form.currency(size=4) }}</div>
+<div>{{ form.supplier.label }}<br>{{ form.supplier(size=40) }}</div>
+<div>{{ form.invoice_number.label }}<br>{{ form.invoice_number(size=30) }}</div>
+<button type="submit">Zapisz</button>
+</form>
+{% endblock %}
