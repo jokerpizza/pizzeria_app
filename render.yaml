@@ -4,8 +4,8 @@ services:
     env: python
     pythonVersion: "3.12"
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt && PLAYWRIGHT_BROWSERS_PATH=.playwright playwright install chromium
+    startCommand: python papu_ingestor.py
     envVars:
       - key: DB_URL
         sync: false
@@ -31,6 +31,8 @@ services:
       - key: PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS
         value: "1"
         value: "1"
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: ".playwright"
       - key: RABBIT_URL
         sync: false
 
