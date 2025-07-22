@@ -8,6 +8,23 @@ services:
     envVars:
       - key: DB_URL
         sync: false
+- type: worker
+    name: papu-ingestor
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && playwright install --with-deps chromium
+    startCommand: python papu_ingestor.py
+    envVars:
+      - key: PAPU_EMAIL
+        sync: false
+      - key: PAPU_PASSWORD
+        sync: false
+      - key: PAPU_COMPANY_ID
+        sync: false
+      - key: PAPU_LOCALIZATION_ID
+        sync: false
+      - key: RABBIT_URL
+        sync: false
   - type: static
     name: foodcost-frontend
     rootDir: frontend
