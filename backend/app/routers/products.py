@@ -1,27 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from .. import schemas, crud
 from ..database import get_db
+from .. import schemas, crud
 
 router = APIRouter(prefix="/products", tags=["products"])
 
-@router.post("/", response_model=schemas.ProductOut)
-def create_product(data: schemas.ProductCreate, db: Session = Depends(get_db)):
-    return crud.create_product(db, data)
-
 @router.get("/", response_model=list[schemas.ProductOut])
-def list_products(db: Session = Depends(get_db)):
-    return crud.list_products(db)
+def list_(db:Session=Depends(get_db)):
+    res=[]
+    for p in crud.list_products(db):
+        d = schemas.ProductOut.from_orm(p).dict()
+        d['category_name']= p.category.name if p.category else None
+        res.append(d)
+    return res
 
-@router.put("/{product_id}", response_model=schemas.ProductOut)
-def update_product(product_id: int, data: schemas.ProductUpdate, db: Session = Depends(get_db)):
-    if not crud.get_product(db, product_id):
-        raise HTTPException(404)
-    return crud.update_product(db, product_id, data)
+@router.post("/", response_model=schemas.ProductOut)
+def create(data:schemas.ProductCreate, db:Session=Depends(get_db)):
+    return schemas.ProductOut.from_orm(crud.create_product(db,data))
 
-@router.delete("/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
-    if not crud.get_product(db, product_id):
-        raise HTTPException(404)
-    crud.delete_product(db, product_id)
-    return {"ok": True}
+@router.put("/{pid}", response_model=schemas.ProductOut)
+def update(pid:int, data:schemas.ProductUpdate, db:Session=Depends(get_db)):
+    if not crud.get_product(db,pid): raise HTTPException(404)
+    return schemas.ProductOut.from_orm(crud.update_product(db,pid,data))
+
+@router.delete("/{pid}")
+def delete(pid:int, db:Session=Depends(get_db)):
+    if not crud.get_product(db,pid): raise HTTPException(404)
+    crud.delete_product(db,pid); return {"ok":True}
