@@ -1,0 +1,31 @@
+
+{% extends 'layout.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header">Dzienny koszt zakupów (demo)</div>
+      <div class="card-body">
+        <canvas id="dailyChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header">Szybkie linki</div>
+      <div class="list-group list-group-flush">
+        <a class="list-group-item" href="{{ url_for('products_bp.products_list') }}">Produkty</a>
+        <a class="list-group-item" href="{{ url_for('products_bp.prices_list') }}">Ceny/Zakupy</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx=document.getElementById('dailyChart');
+new Chart(ctx,{type:'line',data:{labels:['Pon','Wt','Śr','Cz','Pt','So','Nd'],datasets:[{label:'PLN',data:[120,90,150,80,200,50,220]}]}}); 
+</script>
+{% endblock %}
