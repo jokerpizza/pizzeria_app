@@ -1,22 +1,32 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..database import get_db
-from .. import schemas, crud
+from .. import schemas, crud, database
 
-router = APIRouter(prefix="/categories", tags=["categories"])
+router = APIRouter(
+    prefix="/categories",
+    tags=["categories"],
+)
 
-@router.get("/products", response_model=list[schemas.ProdCatOut])
-def list_prod(db:Session=Depends(get_db)):
-    return [schemas.ProdCatOut.from_orm(c) for c in crud.list_prod_cat(db)]
+get_db = database.get_db
 
-@router.post("/products", response_model=schemas.ProdCatOut)
-def create_prod(data:schemas.ProdCatCreate, db:Session=Depends(get_db)):
-    return schemas.ProdCatOut.from_orm(crud.create_prod_cat(db,data))
+@router.get("/", response_model=list[schemas.Category])
+def read_categories(db: Session = Depends(get_db)):
+    return crud.get_categories(db)
 
-@router.get("/recipes", response_model=list[schemas.RecCatOut])
-def list_rec(db:Session=Depends(get_db)):
-    return [schemas.RecCatOut.from_orm(c) for c in crud.list_rec_cat(db)]
+@router.post("/", response_model=schemas.Category)
+def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_db)):
+    return crud.create_category(db, category)
 
-@router.post("/recipes", response_model=schemas.RecCatOut)
-def create_rec(data:schemas.RecCatCreate, db:Session=Depends(get_db)):
-    return schemas.RecCatOut.from_orm(crud.create_rec_cat(db,data))
+@router.patch("/{category_id}", response_model=schemas.Category)
+def update_category(category_id: int, category: schemas.CategoryUpdate, db: Session = Depends(get_db)):
+    db_category = crud.update_category(db, category_id, category)
+    if db_category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return db_category
+
+@router.delete("/{category_id}", response_model=schemas.Category)
+def delete_category(category_id: int, db: Session = Depends(get_db)):
+    db_category = crud.delete_category(db, category_id)
+    if db_category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return db_category
