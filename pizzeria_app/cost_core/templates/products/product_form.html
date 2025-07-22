@@ -1,0 +1,11 @@
+{% extends 'layout.html' %}
+{% block title %}{{ action }}{% endblock %}
+{% block content %}
+<h1>{{ action }}</h1>
+<form method="post">
+  {{ form.hidden_tag() }}
+  <div>{{ form.name.label }}<br>{{ form.name(size=40) }}{% for e in form.name.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+  <div>{{ form.unit.label }}<br>{{ form.unit() }}{% for e in form.unit.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+  <button type="submit">Zapisz</button>
+</form>
+{% endblock %}
