@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: foodcost-backend
+    env: python
+    pythonVersion: "3.12"
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && PLAYWRIGHT_BROWSERS_PATH=.playwright playwright install chromium
+    startCommand: python papu_ingestor.py
+    envVars:
+      - key: DB_URL
+        sync: false
+
+  - type: worker
+    name: papu-ingestor
+    env: python
+    pythonVersion: "3.12"
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python papu_ingestor.py
+    envVars:
+      - key: PAPU_EMAIL
+        sync: false
+      - key: PAPU_PASSWORD
+        sync: false
+      - key: PAPU_COMPANY_ID
+        sync: false
+      - key: PAPU_LOCALIZATION_ID
+        sync: false
+      - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+        value: "1"
+      - key: PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS
+        value: "1"
+        value: "1"
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: ".playwright"
+      - key: RABBIT_URL
+        sync: false
+
+  - type: static
+    name: foodcost-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
