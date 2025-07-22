@@ -69,7 +69,7 @@ export default function Recipes(){
 
       <div className="mb-4 flex flex-wrap gap-2 items-center">
         <input className="border p-2" placeholder="Szukaj..." value={filter} onChange={e=>setFilter(e.target.value)}/>
-        <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={fcOnly} onChange={e=>setFcOnly(e.target.checked)}/> FC% > próg</label>
+        <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={fcOnly} onChange={e=>setFcOnly(e.target.checked)}/> FC% &gt; próg</label>
         <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={semiOnly} onChange={e=>setSemiOnly(e.target.checked)}/> tylko półprodukty</label>
         <button className="bg-brand text-white px-3 py-2 rounded" onClick={addCat}>+ kategoria</button>
       </div>
