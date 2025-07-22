@@ -28,6 +28,9 @@ services:
         sync: false
       - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
         value: "1"
+      - key: PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS
+        value: "1"
+        value: "1"
       - key: RABBIT_URL
         sync: false
 
