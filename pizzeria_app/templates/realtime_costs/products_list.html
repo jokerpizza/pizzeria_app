@@ -1,0 +1,18 @@
+{% extends 'base.html' %}{% block title %}Produkty{% endblock %}{% block content %}
+<h1>Produkty (zakupy)</h1>
+<a href="{{ url_for('rtcosts.product_new') }}" class="btn">+ Dodaj produkt</a>
+<table><thead><tr><th>ID</th><th>Nazwa</th><th>Jedn.</th><th>Aktualna cena</th><th>Akcje</th></tr></thead><tbody>
+{% for p in products %}
+<tr>
+<td>{{ p.id }}</td><td>{{ p.name }}</td><td>{{ p.unit }}</td>
+<td>{% if p.current_price() %}{{ '%.4f'|format(p.current_price().unit_net) }} {{ p.current_price().currency }}{% else %}-{% endif %}</td>
+<td>
+<a href="{{ url_for('rtcosts.product_edit', pid=p.id) }}">Edytuj</a> |
+<a href="{{ url_for('rtcosts.price_history', pid=p.id) }}">Historia</a> |
+<form action="{{ url_for('rtcosts.product_delete', pid=p.id) }}" method="post" style="display:inline" onsubmit="return confirm('Usunąć?');">
+<button type="submit">Usuń</button></form>
+</td>
+</tr>
+{% endfor %}
+</tbody></table>
+{% endblock %}
