@@ -1,26 +1,25 @@
-
-"""
+""" 
 Papu.io → RabbitMQ ingestor
 ---------------------------------------
 
 - Loguje się do panelu admin.papu.io za pomocą Playwright.
-- Co 60 s pobiera nowe sprzedaże z ostatnich 2 min (bufor bezpieczeństwa).
-- Publikuje każdą pozycję (item) jako JSON do kolejki RabbitMQ (`pos_sales`).
+- Co 60 s pobiera nowe sprzedaże z ostatnich 2 min.
+- Publikuje każdą pozycję jako JSON do kolejki RabbitMQ (`pos_sales`).
 
-Środowisko / zmienne:
-    PAPU_EMAIL            – login do Papu.io
-    PAPU_PASSWORD         – hasło
-    PAPU_COMPANY_ID       – np. "758"
-    PAPU_LOCALIZATION_ID  – np. "801" (oddział)
-    RABBIT_URL            – amqp://guest:guest@localhost:5672/
-    RABBIT_QUEUE          – domyślnie "pos_sales"
+Zmienne środowiskowe:
+    PAPU_EMAIL            – login do Papu.io
+    PAPU_PASSWORD         – hasło
+    PAPU_COMPANY_ID       – np. "758"
+    PAPU_LOCALIZATION_ID  – np. "801"
+    RABBIT_URL            – amqp://guest:guest@localhost:5672/
+    RABBIT_QUEUE          – domyślnie "pos_sales"
 
 Uruchomienie:
-    poetry run python papu_ingestor.py
+    python papu_ingestor.py
 
 Zależności:
     playwright==1.44.0
-    pika
+    pika==1.3.2
     python-dotenv
 """
 
@@ -53,8 +52,6 @@ PLAYWRIGHT_STATE = "storage_state.json"
 
 UTC = timezone.utc
 
-# -----------  HELPERS  -----------
-
 
 def _require_env(var: str) -> None:
     if not os.getenv(var):
@@ -74,15 +71,15 @@ async def _ensure_context() -> BrowserContext:
         if os.path.exists(PLAYWRIGHT_STATE):
             context = await browser.new_context(storage_state=PLAYWRIGHT_STATE)
             return context
-        # First run – login through UI.
+        # First run – login through UI.
         context = await browser.new_context()
         page = await context.new_page()
-        logging.info("Logging in to Papu.io UI…")
+        logging.info("Logging in to Papu.io UI...")
         await page.goto("https://admin.papu.io/login", wait_until="domcontentloaded")
         await page.fill("input[name='email']", PAPU_EMAIL)
         await page.fill("input[name='password']", PAPU_PASSWORD)
         await page.click("button[type='submit']")
-        await page.wait_for_url("**/dashboard", timeout=15_000)
+        await page.wait_for_url("**/dashboard", timeout=15000)
         # Save cookies/state for next launches
         await context.storage_state(path=PLAYWRIGHT_STATE)
         logging.info("Login successful – state saved.")
@@ -90,7 +87,7 @@ async def _ensure_context() -> BrowserContext:
 
 
 async def fetch_sales(since: datetime, until: datetime) -> List[Dict]:
-    """Pobierz wszystkie sprzedane pozycje między since/ until (UTC)."""
+    """Fetch sales items between since/until."""
     context = await _ensure_context()
     request_context = context.request
 
@@ -109,7 +106,7 @@ async def fetch_sales(since: datetime, until: datetime) -> List[Dict]:
         resp = await request_context.get(LIST_ENDPOINT, params=params)
         if resp.status != 200:
             text = await resp.text()
-            logging.error("Papu API error %s – %s", resp.status, text[:200])
+            logging.error("Papu API error %s – %s", resp.status, text[:200])
             break
         data = await resp.json()
         sales.extend(data.get("results", []))
@@ -123,7 +120,6 @@ async def fetch_sales(since: datetime, until: datetime) -> List[Dict]:
 
 
 # -----------  RABBITMQ  -----------
-
 def publish_sales(sales: List[Dict]):
     if not sales:
         return
@@ -135,7 +131,7 @@ def publish_sales(sales: List[Dict]):
             exchange="",
             routing_key=QUEUE_NAME,
             body=json.dumps(sale).encode(),
-            properties=pika.BasicProperties(delivery_mode=2),  # persist
+            properties=pika.BasicProperties(delivery_mode=2),
         )
     connection.close()
     logging.info("Published %d sales to queue '%s'", len(sales), QUEUE_NAME)
@@ -144,7 +140,6 @@ def publish_sales(sales: List[Dict]):
 # -----------  MAIN LOOP  -----------
 async def run_polling():
     logging.info("Starting Papu ingestor…")
-    # initial sync window – last 5 minutes
     window = timedelta(minutes=2)
     while True:
         until = datetime.utcnow().replace(tzinfo=UTC)
@@ -158,42 +153,15 @@ async def run_polling():
 
 
 def main():
-    for var in ["PAPU_EMAIL", "PAPU_PASSWORD", "PAPU_COMPANY_ID", "PAPU_LOCALIZATION_ID"]:
+    for var in [
+        "PAPU_EMAIL",
+        "PAPU_PASSWORD",
+        "PAPU_COMPANY_ID",
+        "PAPU_LOCALIZATION_ID",
+    ]:
         _require_env(var)
     asyncio.run(run_polling())
 
-
-if __name__ == "__main__":
-    main()
-
-        channel.basic_publish(
-            exchange="",
-            routing_key=QUEUE_NAME,
-            body=json.dumps(sale).encode(),
-            properties=pika.BasicProperties(delivery_mode=2),  # persist
-        )
-    connection.close()
-    logging.info("Published %d sales to queue '%s'", len(sales), QUEUE_NAME)
-
-# -----------  MAIN LOOP  -----------
-async def run_polling():
-    logging.info("Starting Papu ingestor…")
-    # initial sync window – last 5 minutes
-    window = timedelta(minutes=2)
-    while True:
-        until = datetime.utcnow().replace(tzinfo=UTC)
-        since = until - window
-        try:
-            sales = await fetch_sales(since, until)
-            publish_sales(sales)
-        except Exception as exc:
-            logging.exception("Ingestor error: %s", exc)
-        await asyncio.sleep(60)  # poll interval
-
-def main():
-    for var in ["PAPU_EMAIL", "PAPU_PASSWORD", "PAPU_COMPANY_ID", "PAPU_LOCALIZATION_ID"]:
-        _require_env(var)
-    asyncio.run(run_polling())
 
 if __name__ == "__main__":
     main()

@@ -2,17 +2,21 @@ services:
   - type: web
     name: foodcost-backend
     env: python
+    pythonVersion: "3.12"
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DB_URL
         sync: false
-- type: worker
+
+  - type: worker
     name: papu-ingestor
     env: python
+    pythonVersion: "3.12"
     rootDir: backend
-    buildCommand: pip install -r requirements.txt && playwright install --with-deps chromium
+    buildCommand: |
+      pip install -r requirements.txt && playwright install --with-deps chromium
     startCommand: python papu_ingestor.py
     envVars:
       - key: PAPU_EMAIL
@@ -25,6 +29,7 @@ services:
         sync: false
       - key: RABBIT_URL
         sync: false
+
   - type: static
     name: foodcost-frontend
     rootDir: frontend
