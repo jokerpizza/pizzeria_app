@@ -11,25 +11,21 @@ services:
         sync: false
 
   - type: worker
-    name: papu-ingestor
-    env: python
-    pythonVersion: "3.12"
-    rootDir: backend
-    buildCommand: |
-      pip install -r requirements.txt && playwright install chromium
-    startCommand: python papu_ingestor.py
-    envVars:
-      - key: PAPU_EMAIL
-        sync: false
-      - key: PAPU_PASSWORD
-        sync: false
-      - key: PAPU_COMPANY_ID
-        sync: false
-      - key: PAPU_LOCALIZATION_ID
-        sync: false
-      - key: RABBIT_URL
-        sync: false
-
+- type: worker
+  name: papu-ingestor
+  env: docker
+  dockerfilePath: backend/Dockerfile
+  envVars:
+    - key: PAPU_EMAIL
+      sync: false
+    - key: PAPU_PASSWORD
+      sync: false
+    - key: PAPU_COMPANY_ID
+      sync: false
+    - key: PAPU_LOCALIZATION_ID
+      sync: false
+    - key: RABBIT_URL
+      sync: false
   - type: static
     name: foodcost-frontend
     rootDir: frontend
