@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash
 from . import products_bp
-from ..forms import ProductForm, PriceForm
+from .forms import ProductForm, PriceForm
 from ...extensions import db
 from ...models import Product, ProductPrice
 from datetime import datetime
