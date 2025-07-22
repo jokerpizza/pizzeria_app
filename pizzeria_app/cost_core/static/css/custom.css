@@ -1,8 +1,0 @@
-body{font-family:Arial, sans-serif;margin:20px;}
-nav a{margin-right:10px;}
-table{border-collapse:collapse;width:100%;margin-top:10px;}
-td,th{border:1px solid #ccc;padding:4px 6px;}
-.btn{padding:6px 10px;background:#eee;border:1px solid #ccc;text-decoration:none;}
-.error{color:red;font-size:0.85em;}
-.flashes{list-style:none;padding:0;}
-.success{color:green;}
