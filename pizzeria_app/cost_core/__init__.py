@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from .config import Config
 from .extensions import db, migrate
 from .blueprints.products import products_bp
