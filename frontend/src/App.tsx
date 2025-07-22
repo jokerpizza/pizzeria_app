@@ -1,24 +1,29 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import Products from "./pages/Products";
-import Recipes from "./pages/Recipes";
-import Categories from "./pages/Categories";
+import { useState } from 'react'
+import Dashboard from './pages/Dashboard'
+import Products from './pages/Products'
+import Recipes from './pages/Recipes'
 
-export default function App() {
+type Page = 'dashboard'|'products'|'recipes'
+
+export default function App(){
+  const [page, setPage] = useState<Page>('dashboard')
+
   return (
-    <BrowserRouter>
-      <div className="flex gap-4 p-4 bg-gray-200 mb-8">
-        <Link to="/">Dashboard</Link>
-        <Link to="/products">Produkty</Link>
-        <Link to="/recipes">Przepisy</Link>
-        <Link to="/categories">Kategorie</Link>
-      </div>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/recipes" element={<Recipes />} />
-        <Route path="/categories" element={<Categories />} />
-      </Routes>
-    </BrowserRouter>
-  );
+    <div className="flex h-screen">
+      <aside className="w-60 bg-brand text-white flex flex-col">
+        <div className="p-4 text-2xl font-bold">FoodCost</div>
+        <nav className="flex-1">
+          <button className={"w-full text-left p-3 hover:bg-green-700 "+(page==='dashboard'?'bg-green-800':'')} onClick={()=>setPage('dashboard')}>Dashboard</button>
+          <button className={"w-full text-left p-3 hover:bg-green-700 "+(page==='products'?'bg-green-800':'')} onClick={()=>setPage('products')}>Produkty</button>
+          <button className={"w-full text-left p-3 hover:bg-green-700 "+(page==='recipes'?'bg-green-800':'')} onClick={()=>setPage('recipes')}>Receptury</button>
+        </nav>
+        <div className="p-2 text-xs opacity-70">v0.1.0</div>
+      </aside>
+      <main className="flex-1 overflow-auto p-6">
+        {page==='dashboard' && <Dashboard/>}
+        {page==='products' && <Products/>}
+        {page==='recipes' && <Recipes/>}
+      </main>
+    </div>
+  )
 }

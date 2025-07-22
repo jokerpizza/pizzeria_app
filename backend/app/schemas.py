@@ -1,48 +1,50 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import List
 
-# ----------- PRODUCT -----------
+# ---------- Product ----------
+
 class ProductBase(BaseModel):
-    name: str
-    price: float
+    name: str = Field(..., examples=["Mąka"])
+    base_unit: str = Field(..., examples=["kg"])
+    price_per_kg: float = Field(..., gt=0)
 
 class ProductCreate(ProductBase):
     pass
 
-class ProductUpdate(BaseModel):
-    name: str | None = None
-    price: float | None = None
-
-class Product(ProductBase):
-    id: int
-    class Config:
-        orm_mode = True
-
-ProductOut = Product
-
-# ----------- CATEGORY -----------
-class CategoryBase(BaseModel):
-    name: str
-
-class CategoryCreate(CategoryBase):
+class ProductUpdate(ProductBase):
     pass
 
-class CategoryUpdate(CategoryBase):
-    pass
-
-class Category(CategoryBase):
+class ProductOut(ProductBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# ----------- RECIPE -----------
+# ---------- Recipe ----------
+
+class RecipeItemIn(BaseModel):
+    product_id: int
+    amount: float
+    unit: str
+
 class RecipeBase(BaseModel):
     name: str
-    category_id: int | None = None
+    sale_price: float
 
 class RecipeCreate(RecipeBase):
-    pass
+    items: List[RecipeItemIn]
 
-class Recipe(RecipeBase):
+class RecipeUpdate(RecipeBase):
+    items: List[RecipeItemIn]
+
+class RecipeItemOut(RecipeItemIn):
     id: int
+    product_name: str
+
+class RecipeOut(RecipeBase):
+    id: int
+    items: List[RecipeItemOut]
+    cost: float
+    food_cost_pct: float
+    margin: float
     class Config:
-        orm_mode = True
+        from_attributes = True
