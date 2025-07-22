@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang=pl>
+<head>
+    <meta charset="utf-8"/>
+    <title>{% block title %}Cost Core{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+<div class="sidebar">
+    <h2>CostCore</h2>
+    <a href="{{ url_for('index') }}">Dashboard</a>
+    <a href="{{ url_for('products.list_products') }}">Produkty</a>
+    <a href="{{ url_for('products.prices') }}">Ceny</a>
+</div>
+<div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash">
+          {% for cat, msg in messages %}
+          <li class="{{cat}}">{{ msg }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</div>
+</body>
+</html>
