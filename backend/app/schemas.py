@@ -8,6 +8,10 @@ class ProductBase(BaseModel):
 class ProductCreate(ProductBase):
     pass
 
+class ProductUpdate(BaseModel):
+    name: str | None = None
+    price: float | None = None
+
 class Product(ProductBase):
     id: int
     class Config:
