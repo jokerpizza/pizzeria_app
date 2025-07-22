@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Nowy produkt{% endblock %}
+{% block content %}
+<h2>Nowy produkt</h2>
+<form method="post">
+  {{ form.hidden_tag() }}
+  <div class="form-group">{{ form.name.label }} {{ form.name() }}</div>
+  <div class="form-group">{{ form.unit.label }} {{ form.unit() }}</div>
+  {{ form.submit(class="btn") }}
+</form>
+{% endblock %}
