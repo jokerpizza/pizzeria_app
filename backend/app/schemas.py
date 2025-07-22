@@ -1,5 +1,21 @@
 from pydantic import BaseModel
 
+# ----------- PRODUCT -----------
+class ProductBase(BaseModel):
+    name: str
+    price: float
+
+class ProductCreate(ProductBase):
+    pass
+
+class Product(ProductBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+ProductOut = Product
+
+# ----------- CATEGORY -----------
 class CategoryBase(BaseModel):
     name: str
 
@@ -14,7 +30,15 @@ class Category(CategoryBase):
     class Config:
         orm_mode = True
 
-# ... RecipeBase, RecipeCreate, Recipe itd ...
+# ----------- RECIPE -----------
 class RecipeBase(BaseModel):
-    # ...inne pola...
-    category_id: int | None = None  # <-- nowe pole!
+    name: str
+    category_id: int | None = None
+
+class RecipeCreate(RecipeBase):
+    pass
+
+class Recipe(RecipeBase):
+    id: int
+    class Config:
+        orm_mode = True
