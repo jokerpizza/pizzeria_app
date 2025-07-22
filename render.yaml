@@ -10,13 +10,14 @@ services:
       - key: DB_URL
         sync: false
 
-  - type: worker
+  - type: worker           # ← musi być to samo wcięcie co - type: web!
     name: papu-ingestor
     env: python
     pythonVersion: "3.12"
     rootDir: backend
     buildCommand: |
-      pip install -r requirements.txt && playwright install --with-deps chromium
+      pip install -r requirements.txt \
+        && playwright install --with-deps chromium
     startCommand: python papu_ingestor.py
     envVars:
       - key: PAPU_EMAIL
