@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Nowa cena{% endblock %}
+{% block content %}
+<h1>Nowa cena</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <div class="form-row">{{ form.product_id.label }} {{ form.product_id() }}</div>
+    <div class="form-row">{{ form.price.label }} {{ form.price() }}</div>
+    <div class="form-row">{{ form.quantity.label }} {{ form.quantity() }}</div>
+    <div class="form-row">{{ form.currency.label }} {{ form.currency() }}</div>
+    <div class="form-row">{{ form.valid_from.label }} {{ form.valid_from() }}</div>
+    <button class="btn" type="submit">Zapisz</button>
+</form>
+{% endblock %}
