@@ -1,16 +1,12 @@
 import asyncio
-import logging
-from .ingestor_rest import fetch_and_store
+from .ingestor_rest import fetch_and_store_period
 
-logger = logging.getLogger("sales_scheduler")
-
-async def loop():
-    logger.info("Sales scheduler started.")
+async def scheduler():
+    # always fetch orders regardless of token env
     while True:
         try:
-            fetch_and_store()
-        except Exception as exc:
-            logger.exception("Error during fetch_and_store: %s", exc)
+            new_items = await fetch_and_store_period()
+            print(f"Fetched {new_items} new order items")
+        except Exception as e:
+            print("Scheduler error:", e)
         await asyncio.sleep(300)  # 5 minutes
-
-scheduler = loop  # alias for backwards compatibility

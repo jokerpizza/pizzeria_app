@@ -25,7 +25,7 @@ app.add_middleware(
 app.include_router(products.router, prefix="/api")
 app.include_router(recipes.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
-app.include_router(sales_router)
+app.include_router(sales_router, prefix="/api")  # mount at /api/sales
 
 @app.on_event("startup")
 async def start_sales_scheduler():
