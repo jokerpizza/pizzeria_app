@@ -1,12 +1,16 @@
+
 import asyncio
-from .ingestor_rest import fetch_and_store_period
+import datetime as dt
+from .ingestor_rest import fetch_orders_period, store_orders
 
 async def scheduler():
-    # always fetch orders regardless of token env
     while True:
         try:
-            new_items = await fetch_and_store_period()
+            before = dt.datetime.utcnow()
+            after = before - dt.timedelta(minutes=5)
+            rows = await fetch_orders_period(after, before)
+            new_items = await store_orders(rows)
             print(f"Fetched {new_items} new order items")
         except Exception as e:
             print("Scheduler error:", e)
-        await asyncio.sleep(300)  # 5 minutes
+        await asyncio.sleep(300)
