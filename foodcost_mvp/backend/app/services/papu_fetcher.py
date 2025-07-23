@@ -19,6 +19,8 @@ FIELDS = (
     "is_printed,bill_position_value,bill_position_quantity"
 )
 
+# ---------- Helpers ----------
+
 def parse_papu_dt(val: str):
     """Obsłuż różne formaty dat zwracane przez PAPU."""
     if not val:
@@ -31,7 +33,7 @@ def parse_papu_dt(val: str):
     print("Nieznany format daty z PAPU:", val)
     return None
 
-def fetch_orders(after: str, before: str, page: int = 1, page_size: int = 50):
+def fetch_page(after: str, before: str, page: int, page_size: int = 50):
     headers = {
         "Authorization": f"token {TOKEN}",
         "Accept": "application/json",
@@ -65,7 +67,26 @@ def fetch_orders(after: str, before: str, page: int = 1, page_size: int = 50):
     r.raise_for_status()
     return r.json()
 
+def fetch_orders(after: str, before: str):
+    """Pobierz wszystkie strony wyników między after/before."""
+    page = 1
+    all_results = []
+    while True:
+        data = fetch_page(after, before, page=page, page_size=50)
+        results = data.get("results", [])
+        all_results.extend(results)
+        # brak klucza 'next' w tej strukturze – sprawdzamy liczbę wyników
+        if len(results) < 50:
+            break
+        page += 1
+    return {"results": all_results}
+
+# ---------- DB save ----------
+
 def save_to_db(data: dict, db: Session):
+    inserted_orders = 0
+    inserted_items = 0
+
     for obj in data.get("results", []):
         ext_id = str(obj["id"])
         if db.query(models.Order).filter_by(external_id=ext_id).first():
@@ -82,6 +103,7 @@ def save_to_db(data: dict, db: Session):
         )
         db.add(order)
         db.flush()
+        inserted_orders += 1
 
         item = models.OrderItem(
             order_id=order.id,
@@ -92,8 +114,12 @@ def save_to_db(data: dict, db: Session):
             price=float(obj.get("bill_position_value") or 0),
         )
         db.add(item)
+        inserted_items += 1
 
     db.commit()
+    print(f"Zapisano: {inserted_orders} zamówień, {inserted_items} pozycji.")
+
+# ---------- Main sync ----------
 
 def run_sync():
     db = SessionLocal()
@@ -105,8 +131,18 @@ def run_sync():
         after = after_dt.strftime("%Y-%m-%d %H:%M")
         before = now.strftime("%Y-%m-%d %H:%M")
 
-        data = fetch_orders(after, before)
+        print(f"SYNC START: {after} -> {before}")
+        try:
+            data = fetch_orders(after, before)
+        except requests.HTTPError as e:
+            print("HTTPError:", e)
+            return
+        except Exception as e:
+            print("Unhandled error while fetching orders:", e)
+            return
+
         save_to_db(data, db)
+        print("SYNC OK.")
     finally:
         db.close()
 
