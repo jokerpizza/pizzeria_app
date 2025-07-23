@@ -1,4 +1,3 @@
-
 import asyncio
 import logging
 from .ingestor_rest import fetch_and_store
@@ -13,3 +12,5 @@ async def loop():
         except Exception as exc:
             logger.exception("Error during fetch_and_store: %s", exc)
         await asyncio.sleep(300)  # 5 minutes
+
+scheduler = loop  # alias for backwards compatibility
