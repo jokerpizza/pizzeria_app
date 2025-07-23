@@ -62,6 +62,7 @@ const Sales = () => {
         </tbody>
       </table>
     </div>
-)
+  );
+};
 
 export default Sales
