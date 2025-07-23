@@ -103,6 +103,12 @@ def fetch_and_store():
             order.items.append(order_item)
             total_added += 1
         try:
+            db.commit()
+            return total_added
+        except IntegrityError:
+            db.rollback()
+        finally:
+            db.close()
     db.commit()
     return total_added
         except IntegrityError:
