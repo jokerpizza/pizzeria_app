@@ -43,6 +43,7 @@ def _request_orders(start: datetime.datetime, end: datetime.datetime) -> List[Di
     return results
 
 def fetch_and_store():
+    total_added = 0
     """Fetch last 5 minutes of orders and persist."""
     end = datetime.datetime.utcnow()
     start = end - datetime.timedelta(minutes=5)
@@ -100,8 +101,10 @@ def fetch_and_store():
                 margin_unit=margin_unit
             )
             order.items.append(order_item)
+            total_added += 1
         try:
-            db.commit()
+    db.commit()
+    return total_added
         except IntegrityError:
             db.rollback()
     db.close()
