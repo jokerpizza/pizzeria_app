@@ -1,7 +1,12 @@
 import requests, os, datetime
 from sqlalchemy.orm import Session
-from app.db.session import SessionLocal
+
+from app.db.session import SessionLocal, engine, Base
 from app import models
+
+# <<< DODAJ TO TUŻ PO IMPORTACH >>>
+Base.metadata.create_all(bind=engine)
+# <<< KONIEC DODATKU >>>
 
 API_URL=os.getenv("PAPU_URL","https://rest.papu.io/api/orders/order-meal/list-objects/")
 TOKEN=os.getenv("PAPU_TOKEN")
