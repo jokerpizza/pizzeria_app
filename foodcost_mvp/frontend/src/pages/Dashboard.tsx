@@ -20,7 +20,7 @@ export default function Dashboard(){
       {label:'So', value:2500},
       {label:'Nd', value:3000},
     ])
-    api.get<Order[]>('/api/orders?limit=10')
+    api.get<Order[]>('/api/orders/?limit=10')
       .then(r=>setOrders(r.data))
       .catch(()=>{})
   },[])
