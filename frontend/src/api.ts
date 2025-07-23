@@ -5,3 +5,10 @@ const api = axios.create({
 });
 
 export default api;
+
+
+// sales
+export const fetchSalesLive = async () => {
+  const res = await fetch('/api/sales/live')
+  return res.json()
+}

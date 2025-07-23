@@ -1,9 +1,11 @@
+
 import { useState } from 'react'
 import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import Recipes from './pages/Recipes'
+import Sales from './pages/Sales'  // added
 
-type Page = 'dashboard'|'products'|'recipes'
+type Page = 'dashboard'|'products'|'recipes'|'sales'  // added
 
 export default function App(){
   const [page, setPage] = useState<Page>('dashboard')
@@ -16,6 +18,7 @@ export default function App(){
           <button className={"w-full text-left p-3 hover:bg-green-700 "+(page==='dashboard'?'bg-green-800':'')} onClick={()=>setPage('dashboard')}>Dashboard</button>
           <button className={"w-full text-left p-3 hover:bg-green-700 "+(page==='products'?'bg-green-800':'')} onClick={()=>setPage('products')}>Produkty</button>
           <button className={"w-full text-left p-3 hover:bg-green-700 "+(page==='recipes'?'bg-green-800':'')} onClick={()=>setPage('recipes')}>Receptury</button>
+          <button className={"w-full text-left p-3 hover:bg-green-700 "+(page==='sales'?'bg-green-800':'')} onClick={()=>setPage('sales')}>Sprzedaż</button>  // added
         </nav>
         <div className="p-2 text-xs opacity-70">v0.1.0</div>
       </aside>
@@ -23,6 +26,7 @@ export default function App(){
         {page==='dashboard' && <Dashboard/>}
         {page==='products' && <Products/>}
         {page==='recipes' && <Recipes/>}
+        {page==='sales' && <Sales/>}  // added
       </main>
     </div>
   )
