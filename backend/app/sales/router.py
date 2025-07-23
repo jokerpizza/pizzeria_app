@@ -1,18 +1,19 @@
 
 from datetime import datetime, timedelta
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
-from .models_sales import OrderItem, Order
+from .models_sales import OrderItem, Order, OrderAlias, Recipe
 from ..crud import compute_recipe_totals
+from .recalc import recompute_costs
 
 router = APIRouter(prefix="/sales", tags=["sales"])
 
 @router.get("/live")
-def sales_live(hours: int = 24, db: Session = Depends(get_db)):
-    """Return aggregated sales for last `hours`."""
-    since = datetime.utcnow() - timedelta(hours=hours)
+def sales_live(minutes: int = 60, db: Session = Depends(get_db)):
+    """Aggregated sales for the last `minutes` (default 60)."""
+    since = datetime.utcnow() - timedelta(minutes=minutes)
     items = db.query(OrderItem).join(Order).filter(Order.finished_at >= since).all()
 
     summary = {}
@@ -25,7 +26,6 @@ def sales_live(hours: int = 24, db: Session = Depends(get_db)):
         summary[key]["cost"] += it.cost_unit * it.qty
         summary[key]["margin"] += it.margin_unit * it.qty
 
-    # convert to list sorted by revenue desc
     report = [
         {
             "meal": k,
@@ -41,19 +41,27 @@ def sales_live(hours: int = 24, db: Session = Depends(get_db)):
         "margin": round(sum(v["margin"] for v in report),2),
         "food_cost_pct": round(sum(v["cost"] for v in report)/sum(v["revenue"] for v in report)*100,2) if report else 0
     }
-    return {"since": since.isoformat(), "items": report, "totals": totals}
+    return {
+        "status": "ok",
+        "since_iso": since.isoformat(),
+        "count": len(report),
+        "items": report,
+        "totals": totals
+    }
 
+# -------- alias helpers ----------
 @router.get("/aliases/unmapped")
 def unmapped_aliases(db: Session = Depends(get_db)):
-    from .models_sales import OrderAlias
     rows = db.query(OrderAlias).filter(OrderAlias.recipe_id == None).all()
     return [{"id": r.id, "papu_name": r.papu_name} for r in rows]
 
 @router.post("/aliases/{alias_id}/map/{recipe_id}")
 def map_alias(alias_id: int, recipe_id: int, db: Session = Depends(get_db)):
-    from .models_sales import OrderAlias, OrderItem
     alias = db.query(OrderAlias).get(alias_id)
+    recipe = db.query(Recipe).get(recipe_id)
+    if not alias or not recipe:
+        raise HTTPException(status_code=404, detail="Alias lub receptura nie istnieje")
     alias.recipe_id = recipe_id
     db.commit()
-    # TODO: optionally recalc existing order_items
-    return {"status": "ok"}
+    updated = recompute_costs(alias_id)
+    return {"status": "ok", "updated_items": updated}
