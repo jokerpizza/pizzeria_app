@@ -19,6 +19,18 @@ FIELDS = (
     "is_printed,bill_position_value,bill_position_quantity"
 )
 
+def parse_papu_dt(val: str):
+    """Obsłuż różne formaty dat zwracane przez PAPU."""
+    if not val:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M", "%d-%m-%Y %H:%M", "%Y-%m-%dT%H:%M:%S%z"):
+        try:
+            return datetime.strptime(val, fmt)
+        except ValueError:
+            continue
+    print("Nieznany format daty z PAPU:", val)
+    return None
+
 def fetch_orders(after: str, before: str, page: int = 1, page_size: int = 50):
     headers = {
         "Authorization": f"token {TOKEN}",
@@ -61,7 +73,7 @@ def save_to_db(data: dict, db: Session):
 
         order = models.Order(
             external_id=ext_id,
-            finished_at=datetime.fromisoformat(obj["order_finished_at"]) if obj.get("order_finished_at") else None,
+            finished_at=parse_papu_dt(obj.get("order_finished_at")),
             number=obj.get("order_number"),
             source=obj.get("order_menu_source"),
             brand=obj.get("order_menu_brand_name"),
@@ -88,10 +100,7 @@ def run_sync():
     try:
         last = db.query(models.Order).order_by(models.Order.id.desc()).first()
         now = datetime.now(timezone.utc)
-        if last and last.finished_at:
-            after_dt = last.finished_at
-        else:
-            after_dt = now - timedelta(days=1)
+        after_dt = last.finished_at if (last and last.finished_at) else now - timedelta(days=1)
 
         after = after_dt.strftime("%Y-%m-%d %H:%M")
         before = now.strftime("%Y-%m-%d %H:%M")
