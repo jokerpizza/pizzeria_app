@@ -1,16 +1,16 @@
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+import os
 
-DB_URL = os.getenv("DB_URL", "sqlite:///./dev.db")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
 
-engine = create_engine(DB_URL, pool_pre_ping=True)
-
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
-# Dependency
+from . import models
+Base.metadata.create_all(bind=engine)
+
 def get_db():
     db = SessionLocal()
     try:
