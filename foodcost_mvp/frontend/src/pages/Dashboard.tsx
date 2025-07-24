@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import client from '../api/client'
+import { api } from '../api/client'
 
 interface OrderItem {
   ingredient_id: number
@@ -17,7 +17,7 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<Order[]>([])
 
   useEffect(() => {
-    client.get<Order[]>('/orders/')
+    api.get<Order[]>('/orders/')
       .then(res => {
         // Sort by date descending and take the latest 10 orders
         const latest = res.data
@@ -36,9 +36,7 @@ export default function Dashboard() {
       .reduce((sum, o) => sum + o.total_cost, 0)
   }, [orders])
 
-  const todayProfit = useMemo(() => {
-    return todayRevenue * 0.7
-  }, [todayRevenue])
+  const todayProfit = useMemo(() => todayRevenue * 0.7, [todayRevenue])
 
   return (
     <div className="p-4 space-y-6">
