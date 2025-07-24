@@ -1,33 +1,48 @@
-# Rentownosc-App Full Nested Routes
+# Rentowność Restauracji (rentownosc-app)
 
-## Struktura
-- backend/: Flask API
-- frontend/: React + Vite + Tailwind SPA
-
-## Uruchomienie lokalne
+## Setup Locally
 
 ### Backend
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-export FLASK_APP=app.py
-flask run
+
+1. Create a virtualenv and install dependencies:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+2. Initialize DB and run migrations:
+   ```bash
+   flask db init
+   flask db migrate
+   flask db upgrade
+   ```
+3. Start the server:
+   ```bash
+   flask run
+   ```
 
 ### Frontend
-cd frontend
-npm install
-npm run dev
 
-## Deployment na Render
+1. Install deps and run:
+   ```bash
+   cd frontend
+   yarn install
+   yarn dev
+   ```
 
-Backend:
-- Root: backend
-- Build: pip install -r requirements.txt
-- Start: gunicorn app:app --preload --workers 2
-- Add DATABASE_URL
+## Deployment
 
-Frontend:
-- Root: frontend
-- Build: npm install && npm run build
-- Publish: dist
+1. Zip and push to GitHub:
+   ```bash
+   cd rentownosc-app
+   git init
+   git add .
+   git commit -m "Initial commit"
+   gh repo create your-username/rentownosc-app --public --source=. --remote=origin
+   git push -u origin main
+   ```
+2. On Render.com:
+   - Create two Docker services: one pointing to `/backend`, one to `/frontend`.
+   - Attach a PostgreSQL database and set `DATABASE_URL`.
+   - Deploy and access your `frontend` and `backend` URLs.
