@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import client from '../api/client'
+import { client } from '../api/client'
 
 interface OrderItem {
   ingredient_id: number
