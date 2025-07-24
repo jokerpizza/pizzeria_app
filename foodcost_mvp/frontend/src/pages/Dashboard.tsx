@@ -1,73 +1,82 @@
-import React, {useEffect, useState} from 'react'
-import { api } from '../api/client'
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts'
+import { useEffect, useState, useMemo } from 'react'
+import client from '../api/client'
 
-type StatPoint={label:string,value:number}
-type OrderItem={name:string, quantity:number, price:number}
-type Order={id:number, external_id:string, finished_at:string|null, number:string|null, source:string|null, items:OrderItem[]}
+interface OrderItem {
+  ingredient_id: number
+  quantity: number
+}
 
-export default function Dashboard(){
-  const [points,setPoints]=useState<StatPoint[]>([])
-  const [orders,setOrders]=useState<Order[]>([])
+interface Order {
+  id: number
+  date: string
+  total_cost: number
+  items?: OrderItem[]
+}
 
-  useEffect(()=>{
-    setPoints([
-      {label:'Pon', value:1200},
-      {label:'Wt', value:900},
-      {label:'Śr', value:1500},
-      {label:'Cz', value:800},
-      {label:'Pt', value:2000},
-      {label:'So', value:2500},
-      {label:'Nd', value:3000},
-    ])
-    api.get<Order[]>('/api/orders/?limit=10')
-      .then(r=>setOrders(r.data))
-      .catch(()=>{})
-  },[])
+export default function Dashboard() {
+  const [orders, setOrders] = useState<Order[]>([])
+
+  useEffect(() => {
+    client.get<Order[]>('/orders/')
+      .then(res => {
+        // Sort by date descending and take the latest 10 orders
+        const latest = res.data
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 10)
+        setOrders(latest)
+      })
+      .catch(err => console.error('Error fetching orders:', err))
+  }, [])
+
+  // Compute today's revenue and profit (70% of revenue)
+  const todayRevenue = useMemo(() => {
+    const todayString = new Date().toISOString().split('T')[0]
+    return orders
+      .filter(o => o.date.startsWith(todayString))
+      .reduce((sum, o) => sum + o.total_cost, 0)
+  }, [orders])
+
+  const todayProfit = useMemo(() => {
+    return todayRevenue * 0.7
+  }, [todayRevenue])
 
   return (
-    <div style={{padding:20,fontFamily:'sans-serif'}}>
-      <h1>Dashboard</h1>
-      <div style={{width:'100%',height:300}}>
-        <ResponsiveContainer>
-          <LineChart data={points}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="label" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="value" />
-          </LineChart>
-        </ResponsiveContainer>
+    <div className="p-4 space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 bg-white border rounded-lg shadow">
+          <div className="text-sm text-gray-500">Dzisiejszy utarg</div>
+          <div className="text-2xl font-bold">{todayRevenue.toFixed(2)} PLN</div>
+        </div>
+        <div className="p-4 bg-white border rounded-lg shadow">
+          <div className="text-sm text-gray-500">Dzisiejszy zarobek (70%)</div>
+          <div className="text-2xl font-bold">{todayProfit.toFixed(2)} PLN</div>
+        </div>
       </div>
 
-      <section style={{marginTop:30}}>
-        <h2>Ostatnie zamówienia</h2>
-        <table style={{width:'100%', borderCollapse:'collapse', fontSize:14}}>
-          <thead>
-            <tr>
-              <th style={{textAlign:'left', borderBottom:'1px solid #ccc'}}>Data</th>
-              <th style={{textAlign:'left', borderBottom:'1px solid #ccc'}}>Nr</th>
-              <th style={{textAlign:'left', borderBottom:'1px solid #ccc'}}>Źródło</th>
-              <th style={{textAlign:'left', borderBottom:'1px solid #ccc'}}>Pozycje</th>
-              <th style={{textAlign:'right', borderBottom:'1px solid #ccc'}}>Suma (PLN)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map(o=>{
-              const sum = o.items.reduce((s,i)=>s + (i.price||0),0)
-              return (
-                <tr key={o.id}>
-                  <td style={{padding:'6px 0'}}>{o.finished_at ? new Date(o.finished_at).toLocaleString() : '-'}</td>
-                  <td>{o.number||o.external_id}</td>
-                  <td>{o.source||''}</td>
-                  <td>{o.items.map((i,idx)=>(<span key={idx}>{i.name} x{i.quantity}{idx<o.items.length-1?', ':''}</span>))}</td>
-                  <td style={{textAlign:'right'}}>{sum.toFixed(2)}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </section>
+      <h1 className="text-xl font-semibold">Ostatnie 10 zamówień</h1>
+      {orders.length === 0 ? (
+        <p>Brak zamówień do wyświetlenia.</p>
+      ) : (
+        <ul className="space-y-3">
+          {orders.map(o => (
+            <li key={o.id} className="p-3 border rounded-lg shadow">
+              <div className="font-medium">
+                Zamówienie #{o.id} - {new Date(o.date).toLocaleDateString('pl-PL')}
+              </div>
+              <div>Koszt: {o.total_cost.toFixed(2)} PLN</div>
+              {o.items && o.items.length > 0 && (
+                <ul className="mt-2 list-disc list-inside">
+                  {o.items.map(item => (
+                    <li key={item.ingredient_id}>
+                      Surowiec ID {item.ingredient_id}: {item.quantity}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
