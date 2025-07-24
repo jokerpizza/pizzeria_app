@@ -1,4 +1,4 @@
-# Rentownosc-App Full
+# Rentownosc-App Full Nested Routes
 
 ## Struktura
 - backend/: Flask API
